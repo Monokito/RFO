@@ -113,6 +113,14 @@
   }
   .bio-text p{ margin:0 0 16px; color:var(--ink); }
   .bio-text p:last-child{ margin-bottom:0; }
+  .bio-text p.bio-lead{
+    font-family:var(--body);
+    font-weight:600;
+    color:var(--navy);
+    font-size:15px;
+    letter-spacing:0.01em;
+    margin-bottom:20px;
+  }
 
   /* ---------- Muziek / embeds ---------- */
   .embed-grid{
@@ -142,9 +150,23 @@
   }
   /* Standaard hoogtes; pas gerust aan als het platform een andere embed-grootte teruggeeft */
   .embed-frame.bandcamp iframe{ height:120px; }
-  .embed-frame.soundcloud iframe{ height:166px; }
+  .embed-frame.soundcloud iframe{ height:560px; }
   .embed-frame.youtube{ position:relative; padding-top:56.25%; height:0; }
   .embed-frame.youtube iframe{ position:absolute; top:0; left:0; width:100%; height:100%; }
+
+  .embed-frame.link-only{ display:flex; justify-content:center; padding:26px 4px; }
+  .listen-link{
+    display:inline-block;
+    padding:14px 26px;
+    border:1px solid var(--navy);
+    color:var(--navy);
+    text-decoration:none;
+    font-family:var(--body);
+    font-weight:600;
+    font-size:14px;
+    letter-spacing:0.03em;
+  }
+  .listen-link:hover{ background:var(--navy); color:var(--surface); }
 
   .embed-empty-note{
     margin:0;
@@ -202,13 +224,20 @@
         </div>
 
         <div class="bio-text">
+          <p class="bio-lead">Room Full Of Oscillators — a synthesizer project</p>
           <p>
-            Vervang deze alinea door je eigen bio. Vertel wie je bent, waar de muziek vandaan komt,
-            en wat "Analogue Sound Future" voor jou betekent.
+            Long before software instruments and streaming platforms, there were cheap cassette decks,
+            late-night radio broadcasts, and synthesizers humming in dimly lit rooms. We grew up in the
+            Netherlands during the 1980s and 90s, surrounded by the rise of electronic music, home
+            recording culture, and the unmistakable sound of magnetic tape.
           </p>
           <p>
-            Voeg gerust een tweede alinea toe — bijvoorbeeld over invloeden, de studio-setup,
-            of het verhaal achter deze release. Kopieer dit &lt;p&gt;-blok voor extra alinea's.
+            Our project continues that lineage through analog synths, tape saturation, drifting textures,
+            and slow-moving compositions that feel both distant and strangely familiar.
+          </p>
+          <p>
+            Recorded in the Netherlands — home of Philips, the company that introduced the compact
+            cassette tape to the world.
           </p>
         </div>
       </div>
@@ -221,38 +250,22 @@
 
         <div class="embed-card">
           <span class="embed-label">Bandcamp</span>
-          <!--
-            Ga op Bandcamp naar je album of track → knop "Share / Embed"
-            → kies een formaat → kopieer de volledige <iframe>-code
-            → plak die hier in plaats van het onderstaande <p>-blok.
-          -->
           <div class="embed-frame bandcamp">
-            <p class="embed-empty-note">Nog geen Bandcamp-link toegevoegd.<br>Zie <code>README.md</code>.</p>
+            <iframe style="border: 0; width: 100%; height: 120px;" src="https://bandcamp.com/EmbeddedPlayer/album=3652319347/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/" seamless><a href="https://roomfullofoscillators.bandcamp.com/album/modern-machines">Modern Machines by Room Full Of Oscillators</a></iframe>
           </div>
         </div>
 
         <div class="embed-card">
           <span class="embed-label">SoundCloud</span>
-          <!--
-            Ga op SoundCloud naar je track of playlist → "Share" → tab "Embed"
-            → kopieer de <iframe>-code → plak die hier.
-          -->
           <div class="embed-frame soundcloud">
-            <p class="embed-empty-note">Nog geen SoundCloud-link toegevoegd.<br>Zie <code>README.md</code>.</p>
+            <iframe title="SoundCloud" width="100%" height="560" scrolling="no" frameborder="no" allow="autoplay" src="https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Froomfullofoscillators%2Fsets%2Fmodern-machines&color=%23002865&auto_play=false&show_user=true&show_reposts=false&show_teaser=true"></iframe>
           </div>
         </div>
 
         <div class="embed-card">
           <span class="embed-label">YouTube Music</span>
-          <!--
-            YouTube (Music) heeft geen eigen embed-knop voor playlists; gebruik de gewone
-            YouTube-insluitcode. Zoek in de playlist-URL het stuk achter "list=":
-            https://music.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx
-            en plak dat playlist-ID in de src hieronder, in plaats van "PLAYLIST_ID_HIER":
-            <iframe src="https://www.youtube.com/embed/videoseries?list=PLAYLIST_ID_HIER"></iframe>
-          -->
-          <div class="embed-frame youtube">
-            <p class="embed-empty-note">Nog geen YouTube Music-playlist toegevoegd.<br>Zie <code>README.md</code>.</p>
+          <div class="embed-frame youtube-fallback link-only">
+            <a class="listen-link" href="https://www.youtube.com/playlist?list=PLO8J2dSID-Gk" target="_blank" rel="noopener">Bekijk op YouTube →</a>
           </div>
         </div>
 
