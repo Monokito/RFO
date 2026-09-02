@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analogue Sound Future</title>
+<meta name="description" content="Room Full of Oscillators — Modern Machines — Analogue Sound Future.">
+
+<!-- Lettertypes: Anton (koppen, zoals in de banner) + Inter (leestekst) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#b9cbc5;
+    --surface:#eaf1ee;
+    --ink:#16222c;
+    --muted:#3f5468;
+    --navy:#002865;
+    --line: rgba(0,40,101,0.25);
+    --display: "Anton", sans-serif;
+    --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --max: 880px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:17px;
+    line-height:1.6;
+  }
+  img{ max-width:100%; display:block; }
+
+  /* ---------- Banner ---------- */
+  .banner img{ width:100%; height:auto; display:block; }
+
+  /* ---------- Layout ---------- */
+  main{ max-width:var(--max); margin:0 auto; padding:0 24px; }
+  .section{ padding:56px 0; border-bottom:1px solid var(--line); }
+  .section:last-of-type{ border-bottom:none; }
+
+  .section-title{
+    font-family:var(--display);
+    font-weight:400;
+    font-size:34px;
+    letter-spacing:0.02em;
+    color:var(--navy);
+    margin:0 0 28px;
+    text-transform:uppercase;
+  }
+  .eyebrow{
+    font-family:var(--body);
+    font-weight:600;
+    font-size:12.5px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 6px;
+  }
+
+  /* ---------- Intro ---------- */
+  .intro{ padding:44px 0 0; }
+  .intro p{
+    font-size:19px;
+    line-height:1.65;
+    color:var(--ink);
+    max-width:640px;
+    margin:0;
+  }
+
+  /* ---------- Bio ---------- */
+  .bio-grid{
+    display:grid;
+    grid-template-columns: 220px 1fr;
+    gap:36px;
+    align-items:start;
+  }
+  @media (max-width: 620px){
+    .bio-grid{ grid-template-columns: 1fr; }
+  }
+  .photo-wrap img{
+    width:100%;
+    aspect-ratio: 4 / 5;
+    object-fit:cover;
+    border:1px solid var(--line);
+  }
+  .photo-placeholder{
+    width:100%;
+    aspect-ratio: 4 / 5;
+    border:1px dashed var(--line);
+    background:var(--surface);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    text-align:center;
+  }
+  .photo-placeholder p{
+    margin:0;
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.5;
+  }
+  .photo-placeholder code{
+    display:inline-block;
+    margin-top:6px;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size:12px;
+    color:var(--navy);
+  }
+  .bio-text p{ margin:0 0 16px; color:var(--ink); }
+  .bio-text p:last-child{ margin-bottom:0; }
+
+  /* ---------- Muziek / embeds ---------- */
+  .embed-grid{
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+  .embed-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    padding:20px;
+  }
+  .embed-label{
+    display:block;
+    font-family:var(--body);
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--navy);
+    margin-bottom:14px;
+  }
+  .embed-frame iframe{
+    width:100%;
+    border:0;
+    display:block;
+  }
+  /* Standaard hoogtes; pas gerust aan als het platform een andere embed-grootte teruggeeft */
+  .embed-frame.bandcamp iframe{ height:120px; }
+  .embed-frame.soundcloud iframe{ height:166px; }
+  .embed-frame.youtube{ position:relative; padding-top:56.25%; height:0; }
+  .embed-frame.youtube iframe{ position:absolute; top:0; left:0; width:100%; height:100%; }
+
+  .embed-empty-note{
+    margin:0;
+    padding:22px 4px;
+    font-size:14px;
+    color:var(--muted);
+    text-align:center;
+    line-height:1.6;
+  }
+  .embed-empty-note code{
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size:12.5px;
+    color:var(--navy);
+  }
+
+  /* ---------- Footer ---------- */
+  footer{
+    max-width:var(--max);
+    margin:0 auto;
+    padding:32px 24px 56px;
+    font-size:13px;
+    color:var(--muted);
+  }
+</style>
+</head>
+<body>
+
+  <header class="banner">
+    <img src="images/banner.jpg" alt="Room Full of Oscillators — Modern Machines — Analogue Sound Future">
+  </header>
+
+  <main>
+
+    <section class="intro">
+      <p>
+        <!-- Korte openingszin / tagline. Vervang deze tekst of verwijder het hele <p>-blok. -->
+        Vervang deze regel door een korte openingszin over het project — één zin is genoeg.
+      </p>
+    </section>
+
+    <section class="section" id="bio">
+      <p class="eyebrow">Wie</p>
+      <h2 class="section-title">Bio</h2>
+      <div class="bio-grid">
+
+        <!--
+          FOTO
+          Zet je eigen foto in de map "images" en noem het bestand "foto.jpg".
+          Verwijder daarna het onderstaande <div class="photo-placeholder">-blok
+          en vervang het door:
+          <div class="photo-wrap"><img src="images/foto.jpg" alt="Foto"></div>
+        -->
+        <div class="photo-placeholder">
+          <p>Zet een bestand genaamd<br><code>images/foto.jpg</code><br>in de map om hier je foto te tonen.</p>
+        </div>
+
+        <div class="bio-text">
+          <p>
+            Vervang deze alinea door je eigen bio. Vertel wie je bent, waar de muziek vandaan komt,
+            en wat "Analogue Sound Future" voor jou betekent.
+          </p>
+          <p>
+            Voeg gerust een tweede alinea toe — bijvoorbeeld over invloeden, de studio-setup,
+            of het verhaal achter deze release. Kopieer dit &lt;p&gt;-blok voor extra alinea's.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="muziek">
+      <p class="eyebrow">Beluister</p>
+      <h2 class="section-title">Muziek</h2>
+      <div class="embed-grid">
+
+        <div class="embed-card">
+          <span class="embed-label">Bandcamp</span>
+          <!--
+            Ga op Bandcamp naar je album of track → knop "Share / Embed"
+            → kies een formaat → kopieer de volledige <iframe>-code
+            → plak die hier in plaats van het onderstaande <p>-blok.
+          -->
+          <div class="embed-frame bandcamp">
+            <p class="embed-empty-note">Nog geen Bandcamp-link toegevoegd.<br>Zie <code>README.md</code>.</p>
+          </div>
+        </div>
+
+        <div class="embed-card">
+          <span class="embed-label">SoundCloud</span>
+          <!--
+            Ga op SoundCloud naar je track of playlist → "Share" → tab "Embed"
+            → kopieer de <iframe>-code → plak die hier.
+          -->
+          <div class="embed-frame soundcloud">
+            <p class="embed-empty-note">Nog geen SoundCloud-link toegevoegd.<br>Zie <code>README.md</code>.</p>
+          </div>
+        </div>
+
+        <div class="embed-card">
+          <span class="embed-label">YouTube Music</span>
+          <!--
+            YouTube (Music) heeft geen eigen embed-knop voor playlists; gebruik de gewone
+            YouTube-insluitcode. Zoek in de playlist-URL het stuk achter "list=":
+            https://music.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx
+            en plak dat playlist-ID in de src hieronder, in plaats van "PLAYLIST_ID_HIER":
+            <iframe src="https://www.youtube.com/embed/videoseries?list=PLAYLIST_ID_HIER"></iframe>
+          -->
+          <div class="embed-frame youtube">
+            <p class="embed-empty-note">Nog geen YouTube Music-playlist toegevoegd.<br>Zie <code>README.md</code>.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Analogue Sound Future</p>
+  </footer>
+
+</body>
+</html>
