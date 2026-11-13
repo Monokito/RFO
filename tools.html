@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RFO Tools</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Room Full of Oscillators — Modern Machines — Analogue Sound Future.">
+
+<!-- Lettertypes: Anton (koppen, zoals in de banner) + Inter (leestekst) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#b9cbc5;
+    --surface:#eaf1ee;
+    --ink:#16222c;
+    --muted:#3f5468;
+    --navy:#002865;
+    --line: rgba(0,40,101,0.25);
+    --display: "Anton", sans-serif;
+    --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --max: 880px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:17px;
+    line-height:1.6;
+  }
+  img{ max-width:100%; display:block; }
+
+  /* ---------- Banner ---------- */
+  .banner img{ width:100%; height:auto; display:block; }
+
+  /* ---------- Layout ---------- */
+  main{ max-width:var(--max); margin:0 auto; padding:0 24px; }
+  .section{ padding:56px 0; border-bottom:1px solid var(--line); }
+  .section:last-of-type{ border-bottom:none; }
+
+  .section-title{
+    font-family:var(--display);
+    font-weight:400;
+    font-size:34px;
+    letter-spacing:0.02em;
+    color:var(--navy);
+    margin:0 0 28px;
+    text-transform:uppercase;
+  }
+  .eyebrow{
+    font-family:var(--body);
+    font-weight:600;
+    font-size:12.5px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 6px;
+  }
+
+  /* ---------- Intro ---------- */
+  .intro{ padding:44px 0 0; }
+  .intro p{
+    font-size:19px;
+    line-height:1.65;
+    color:var(--ink);
+    max-width:640px;
+    margin:0;
+  }
+
+  /* ---------- Bio ---------- */
+  .bio-grid{
+    display:grid;
+    grid-template-columns: 220px 1fr;
+    gap:36px;
+    align-items:start;
+  }
+  @media (max-width: 620px){
+    .bio-grid{ grid-template-columns: 1fr; }
+  }
+  .photo-wrap img{
+    width:100%;
+    aspect-ratio: 4 / 5;
+    object-fit:cover;
+    border:1px solid var(--line);
+  }
+  .photo-placeholder{
+    width:100%;
+    aspect-ratio: 4 / 5;
+    border:1px dashed var(--line);
+    background:var(--surface);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    text-align:center;
+  }
+  .photo-placeholder p{
+    margin:0;
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.5;
+  }
+  .photo-placeholder code{
+    display:inline-block;
+    margin-top:6px;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size:12px;
+    color:var(--navy);
+  }
+  .bio-text p{ margin:0 0 16px; color:var(--ink); }
+  .bio-text p:last-child{ margin-bottom:0; }
+  .bio-text p.bio-lead{
+    font-family:var(--body);
+    font-weight:600;
+    color:var(--navy);
+    font-size:15px;
+    letter-spacing:0.01em;
+    margin-bottom:20px;
+  }
+
+  /* ---------- Music / embeds ---------- */
+  .embed-grid{
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+  .embed-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    padding:20px;
+  }
+  .embed-label{
+    display:block;
+    font-family:var(--body);
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--navy);
+    margin-bottom:14px;
+  }
+  .embed-frame iframe{
+    width:100%;
+    border:0;
+    display:block;
+  }
+  /* Standaard hoogtes; pas gerust aan als het platform een andere embed-grootte teruggeeft */
+  .embed-frame.bandcamp iframe{ height:120px; }
+  .embed-frame.soundcloud iframe{ height:560px; }
+  .embed-frame.youtube{ position:relative; padding-top:56.25%; height:0; }
+  .embed-frame.youtube iframe{ position:absolute; top:0; left:0; width:100%; height:100%; }
+
+  .embed-frame.link-only{ display:flex; justify-content:center; padding:26px 4px; }
+  .listen-link{
+    display:inline-block;
+    padding:14px 26px;
+    border:1px solid var(--navy);
+    color:var(--navy);
+    text-decoration:none;
+    font-family:var(--body);
+    font-weight:600;
+    font-size:14px;
+    letter-spacing:0.03em;
+  }
+  .listen-link:hover{ background:var(--navy); color:var(--surface); }
+
+  .embed-empty-note{
+    margin:0;
+    padding:22px 4px;
+    font-size:14px;
+    color:var(--muted);
+    text-align:center;
+    line-height:1.6;
+  }
+  .embed-empty-note code{
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size:12.5px;
+    color:var(--navy);
+  }
+
+  /* ---------- Tools ---------- */
+  .tool-card p{ margin:0 0 18px; color:var(--ink); font-size:16px; }
+
+  /* ---------- Footer ---------- */
+  footer{
+    max-width:var(--max);
+    margin:0 auto;
+    padding:32px 24px 56px;
+    font-size:13px;
+    color:var(--muted);
+  }
+</style>
+</head>
+<body>
+
+  <header class="banner">
+    <img src="images/banner.jpg" alt="Room Full of Oscillators — Modern Machines — Analogue Sound Future">
+  </header>
+
+  <main>
+
+
+
+
+    <section class="section" id="tools">
+      <p class="eyebrow"><a href="index.html" style="color:inherit">&larr; Back to RFO</a></p>
+      <h2 class="section-title">Tools</h2>
+      <div class="embed-grid">
+
+        <div class="embed-card tool-card">
+          <span class="embed-label">16Tracks MIDI</span>
+          <p>A 16-track tracker with MIDI support.</p>
+          <a class="listen-link" href="16Tracks_midi_7.html">Open 16Tracks</a>
+        </div>
+
+        <div class="embed-card tool-card">
+          <span class="embed-label">16Tracks MIDI 8 (with Trons)</span>
+          <p>The newest 16Tracks, with Trons (random pitch, sample, glitch repeat and step loop) per track or global, a ModelTron randomizer and a disk browser for loading samples from a folder.</p>
+          <a class="listen-link" href="16Tracks_midi_8.html">Open 16Tracks 8</a>
+        </div>
+
+        <div class="embed-card tool-card">
+          <span class="embed-label">SP-3000 MPC Lab</span>
+          <p>A 16-track MPC and SP-404 style sampling and beat workstation with swing, a sample editor, Trons, vinyl and tape effects, MIDI pad mapping and WAV export.</p>
+          <a class="listen-link" href="SP-3000-MPC.html">Open SP-3000 MPC Lab</a>
+        </div>
+
+        <div class="embed-card tool-card">
+          <span class="embed-label">DionTrackerOG</span>
+          <p>An eight-track audio tracker and sequencer. Works best in Chromium-based browsers.</p>
+          <a class="listen-link" href="DionTrackerOG.html">Open DionTrackerOG</a>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Soundscape Studio</p>
+  </footer>
+
+</body>
+</html>
