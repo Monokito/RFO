@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>XRay</title>
+<style>
+:root{--glow:#E3EEF0;--ink:#102029;--line:#9DB3BA;--hot:#0A7C8F;--warn:#A85500;--panel:#F3F8F9}
+@media (prefers-color-scheme:dark){:root{--glow:#0E1A22;--ink:#D8E8EC;--line:#35505A;--hot:#4FD0E4;--warn:#F0A24A;--panel:#13242D}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--glow);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:48rem;margin:0 auto;padding:clamp(1.5rem,6vw,3.5rem) 1.25rem 3rem}
+h1{font:700 clamp(3.5rem,14vw,6.5rem)/.9 Georgia,"Times New Roman",serif;letter-spacing:-.04em;margin:0}
+h1 span{color:var(--hot)}
+.sub{margin:.75rem 0 1.5rem;max-width:34rem}
+.tabs{display:flex;gap:.25rem;overflow-x:auto;border-bottom:2px solid var(--ink);margin-bottom:1.25rem}
+.tabs button{background:transparent;color:var(--ink);border:0;border-bottom:4px solid transparent;margin-bottom:-2px;padding:.6rem .85rem;white-space:nowrap;font-weight:500}
+.tabs button[aria-selected=true]{border-bottom-color:var(--hot);font-weight:700}
+form{display:flex;gap:.5rem}
+input[type=text]{flex:1;min-width:0;font:inherit;padding:.85rem 1rem;border:2px solid var(--ink);background:var(--panel);color:var(--ink);border-radius:2px}
+button{font:inherit;font-weight:600;padding:.85rem 1.25rem;border:2px solid var(--ink);background:var(--ink);color:var(--glow);border-radius:2px;cursor:pointer}
+button.ghost{background:transparent;color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--hot);outline-offset:2px}
+#hint{margin:.75rem 0 0;min-height:1.5em}
+fieldset{border:1px solid var(--line);margin:1.25rem 0 0;padding:.75rem 1rem 1rem}
+legend{padding:0 .4rem;font-weight:600}
+.engines{display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:.4rem 1rem}
+label{display:flex;gap:.5rem;align-items:flex-start;cursor:pointer}
+label small{display:block;color:var(--line)}
+.grp{grid-column:1/-1;margin-top:.75rem;padding-top:.6rem;border-top:1px dashed var(--line);font-weight:600;color:var(--warn)}
+.row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}
+#out{margin-top:1.5rem;padding:1rem;border-left:4px solid var(--hot);background:var(--panel);display:none;word-break:break-word}
+#out.warn{border-color:var(--warn)}
+#out b{display:block;margin-bottom:.25rem}
+footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--line);font-size:.9rem;max-width:38rem}
+@media (max-width:30rem){form{flex-direction:column}}
+</style>
+</head>
+<body>
+<main>
+<h1>X<span>Ray</span></h1>
+<p class="sub">Look at material without a profile attached. Pick a source group, type or paste, and XRay opens it clean in new tabs.</p>
+
+<div class="tabs" role="tablist" id="tabs"></div>
+
+<form id="f" autocomplete="off">
+  <input type="text" id="q" aria-label="Search or link" autofocus>
+  <button type="submit">Open</button>
+</form>
+<p id="hint"></p>
+
+<fieldset>
+  <legend id="legend">Sources</legend>
+  <div class="engines" id="engines"></div>
+  <div class="row">
+    <button type="button" class="ghost" id="all">Open all selected</button>
+    <button type="button" class="ghost" id="clean">Clean link only</button>
+  </div>
+</fieldset>
+
+<div id="out" role="status"></div>
+
+<footer>
+  XRay is a launcher, not a browser engine. It can’t block trackers on the pages you visit, so open its links in a browser with a blocker such as uBlock Origin. To open several sources at once, allow pop-ups for this file. Search addresses can change; each one is a single line in the <code>TABS</code> list in this file.
+</footer>
+</main>
+
+<script>
+(function(){
+  /* t: q = search text (default), u = full link, r = raw link, h = hostname, fix = fixed address */
+  var TABS=[
+    {id:"web",name:"Web",ph:"Search, or paste a link",hint:"Plain engines without a profile. Tick several to compare what each one shows and leaves out. A pasted link is cleaned and opened.",
+     s:[
+      {n:"DuckDuckGo",note:"Mixed index, no profile",u:"https://duckduckgo.com/?q=%s&kl=wt-wt",on:1},
+      {n:"Brave Search",note:"Own independent index",u:"https://search.brave.com/search?q=%s",on:1},
+      {n:"Mojeek",note:"Own crawler, no tracking",u:"https://www.mojeek.com/search?q=%s",on:1},
+      {n:"Startpage",note:"Google results, anonymised",u:"https://www.startpage.com/do/search?q=%s"},
+      {n:"Marginalia",note:"Small web, non-commercial",u:"https://search.marginalia.nu/search?query=%s"},
+      {g:"Vintage engines (ad-funded, they track more)"},
+      {n:"Wiby",note:"Handpicked retro web",u:"https://wiby.me/?q=%s"},
+      {n:"HotBot",note:"1996, relaunched 2022",u:"https://www.hotbot.com/web?query=%s"},
+      {n:"Lycos",note:"1994, still running",u:"https://search.lycos.com/web/?q=%s"},
+      {n:"WebCrawler",note:"1994, now a meta engine",u:"https://www.webcrawler.com/serp?q=%s"},
+      {n:"Dogpile",note:"1996 meta engine",u:"https://www.dogpile.com/serp?q=%s"},
+      {n:"Excite",note:"1995, still online",u:"https://results.excite.com/serp?q=%s"},
+      {n:"Ask.com",note:"Ask Jeeves, 1996",u:"https://www.ask.com/web?q=%s"},
+      {n:"Yahoo",note:"1994, the old directory",u:"https://search.yahoo.com/search?p=%s"},
+      {n:"AltaVista (archived)",note:"Closed 2013, homepage only",u:"https://web.archive.org/web/2004/http://www.altavista.com/",t:"fix"}
+     ]},
+    {id:"archive",name:"Archives",ph:"Search text, or paste a link for old copies",hint:"For material that was changed or removed. Text searches books and old pages; a pasted link finds saved copies of that page.",
+     s:[
+      {n:"Internet Archive full text",note:"Books, magazines, old pages",u:"https://archive.org/search?query=%s&sin=TXT",on:1},
+      {n:"Wayback Machine",note:"Every saved copy of a link",u:"https://web.archive.org/web/*/%s",t:"r",on:1},
+      {n:"archive.today",note:"Snapshot of a page",u:"https://archive.ph/newest/%s",t:"r",on:1}
+     ]},
+    {id:"primary",name:"Primary sources",ph:"Search a topic, law, or company name",hint:"Read the original document or register instead of someone’s summary.",
+     s:[
+      {n:"Open Overheid (NL)",note:"Dutch government documents",u:"https://open.overheid.nl/zoeken?zoekterm=%s",on:1},
+      {n:"EUR-Lex",note:"EU law and decisions",u:"https://eur-lex.europa.eu/search.html?text=%s&scope=EURLEX&type=quick",on:1},
+      {n:"KvK (NL)",note:"Dutch company register",u:"https://www.kvk.nl/zoeken/?source=all&q=%s",on:1},
+      {n:"OpenCorporates",note:"Companies worldwide",u:"https://opencorporates.com/companies?q=%s"},
+      {n:"Offshore Leaks",note:"Who owns what, ICIJ",u:"https://offshoreleaks.icij.org/search?q=%s"}
+     ]},
+    {id:"research",name:"Research",ph:"Search a topic or paper",hint:"Scholarly sources that don’t rank by advertising value.",
+     s:[
+      {n:"Semantic Scholar",note:"All fields",u:"https://www.semanticscholar.org/search?q=%s",on:1},
+      {n:"OpenAlex",note:"Open index of papers",u:"https://openalex.org/works?search=%s",on:1},
+      {n:"arXiv",note:"Preprints in science and maths",u:"https://arxiv.org/search/?query=%s&searchtype=all"},
+      {n:"PubMed",note:"Medicine and biology",u:"https://pubmed.ncbi.nlm.nih.gov/?term=%s"}
+     ]},
+    {id:"know",name:"Knowledge",ph:"Search a topic",hint:"The same topic in several Wikipedia languages often shows very different framing. Tick a few and compare.",
+     s:[
+      {n:"Wikipedia English",note:"en",u:"https://en.wikipedia.org/w/index.php?search=%s",on:1},
+      {n:"Wikipedia Nederlands",note:"nl",u:"https://nl.wikipedia.org/w/index.php?search=%s",on:1},
+      {n:"Wikipedia Deutsch",note:"de",u:"https://de.wikipedia.org/w/index.php?search=%s",on:1},
+      {n:"Wikipedia Français",note:"fr",u:"https://fr.wikipedia.org/w/index.php?search=%s"},
+      {n:"Wikipedia Русский",note:"ru",u:"https://ru.wikipedia.org/w/index.php?search=%s"},
+      {n:"Wikidata",note:"Structured facts",u:"https://www.wikidata.org/w/index.php?search=%s"}
+     ]},
+    {id:"talk",name:"Conversation",ph:"Search a topic",hint:"Raw discussion, sorted by date where possible, so no feed algorithm picks what you see first.",
+     s:[
+      {n:"Hacker News",note:"Tech and science talk",u:"https://hn.algolia.com/?q=%s&sort=byDate",on:1},
+      {n:"Reddit (old layout)",note:"Newest first",u:"https://old.reddit.com/search?q=%s&sort=new",on:1},
+      {n:"Stack Exchange",note:"Expert Q&A",u:"https://stackexchange.com/search?q=%s"}
+     ]},
+    {id:"img",name:"Images",ph:"Search images, or paste an image link",hint:"Free-licensed images by text. Paste an image link to find where a picture really came from.",
+     s:[
+      {n:"Openverse",note:"Free-licensed images",u:"https://openverse.org/search/image?q=%s",on:1},
+      {n:"Wikimedia Commons",note:"Free media archive",u:"https://commons.wikimedia.org/w/index.php?search=%s",on:1},
+      {n:"TinEye",note:"Reverse image, needs a link",u:"https://tineye.com/search?url=%s",t:"u",on:1}
+     ]},
+    {id:"books",name:"Books",ph:"Search a title or author",hint:"Borrowable and public-domain books.",
+     s:[
+      {n:"Open Library",note:"Millions of titles",u:"https://openlibrary.org/search?q=%s",on:1},
+      {n:"Project Gutenberg",note:"Public-domain texts",u:"https://www.gutenberg.org/ebooks/search/?query=%s",on:1}
+     ]},
+    {id:"site",name:"Site X-ray",ph:"Paste a link to check",hint:"See what a site does to you before you trust it: its trackers, owner, history and safety record.",
+     s:[
+      {n:"Blacklight",note:"Which trackers the page runs",u:"https://themarkup.org/blacklight?url=%s",t:"u",on:1},
+      {n:"Wayback history",note:"How the page changed",u:"https://web.archive.org/web/*/%s",t:"r",on:1},
+      {n:"Domain owner (RDAP)",note:"Who registered the domain",u:"https://rdap.org/domain/%s",t:"h",on:1},
+      {n:"urlscan.io",note:"What the page loads",u:"https://urlscan.io/search/#%s",t:"h"},
+      {n:"Google Safe Browsing",note:"Malware and phishing report",u:"https://transparencyreport.google.com/safe-browsing/search?url=%s",t:"u"}
+     ]}
+  ];
+  var TRACK=/^(utm_.*|fbclid|gclid|gclsrc|dclid|gbraid|wbraid|msclkid|yclid|twclid|ttclid|li_fat_id|igshid|igsh|mc_eid|mc_cid|_hsenc|_hsmi|hsctatracking|vero_id|oly_enc_id|oly_anon_id|wickedid|spm|ref_src|ref_url|cmpid|campaign_id|ocid|s_cid|trk|trkcampaign|sc_cid|__s|_openstat|mkt_tok|pk_campaign|pk_kwd|pk_source|pk_medium|si)$/i;
+  var REDIRECT={"google.com":"q url","www.google.com":"q url","l.facebook.com":"u","l.instagram.com":"u","out.reddit.com":"url"};
+
+  var $=function(i){return document.getElementById(i)};
+  var cur=TABS[0];
+
+  function renderTabs(){
+    var t=$("tabs");t.innerHTML="";
+    TABS.forEach(function(tab){
+      var b=document.createElement("button");
+      b.type="button";b.setAttribute("role","tab");b.textContent=tab.name;
+      b.setAttribute("aria-selected",tab===cur?"true":"false");
+      b.addEventListener("click",function(){cur=tab;renderTabs();renderSources();$("out").style.display="none"});
+      t.appendChild(b);
+    });
+  }
+  function renderSources(){
+    var box=$("engines");box.innerHTML="";
+    $("q").placeholder=cur.ph;$("hint").textContent=cur.hint;
+    $("legend").textContent=cur.name+" sources";
+    cur.s.forEach(function(e,i){
+      if(e.g){var h=document.createElement("div");h.className="grp";h.textContent=e.g;box.appendChild(h);return}
+      var l=document.createElement("label"),c=document.createElement("input"),s=document.createElement("span"),m=document.createElement("small");
+      c.type="checkbox";c.value=i;c.checked=!!e.on;
+      s.textContent=e.n;m.textContent=e.note;s.appendChild(m);
+      l.appendChild(c);l.appendChild(s);box.appendChild(l);
+    });
+  }
+  function selected(){
+    return [].map.call($("engines").querySelectorAll("input:checked"),function(c){return cur.s[+c.value]});
+  }
+  function looksLikeUrl(s){
+    return /^https?:\/\//i.test(s)||(/^[^\s\/]+\.[a-z]{2,}(\/\S*)?$/i.test(s)&&!/\s/.test(s));
+  }
+  function clean(raw){
+    var s=raw.trim();
+    if(!/^https?:\/\//i.test(s))s="https://"+s;
+    var u;try{u=new URL(s)}catch(e){return null}
+    var removed=[];
+    for(var hop=0;hop<3;hop++){
+      var keys=REDIRECT[u.hostname];
+      if(keys===undefined)break;
+      if(u.hostname.indexOf("google")>-1&&u.pathname!=="/url")break;
+      var target=null;
+      keys.split(" ").forEach(function(k){var v=u.searchParams.get(k);if(v&&/^https?:\/\//i.test(v))target=v});
+      if(!target)break;
+      removed.push("redirect via "+u.hostname);
+      u=new URL(target);
+    }
+    var drop=[];
+    u.searchParams.forEach(function(v,k){if(TRACK.test(k))drop.push(k)});
+    drop.forEach(function(k){u.searchParams.delete(k);removed.push(k)});
+    if(/^(www\.)?amazon\./i.test(u.hostname)){
+      var m=u.pathname.match(/(\/(?:dp|gp\/product)\/[A-Z0-9]{10})/);
+      if(m&&u.pathname!==m[1]){u.pathname=m[1];removed.push("amazon path tracking")}
+    }
+    return {url:u.toString(),host:u.hostname,removed:removed};
+  }
+  function go(url){window.open(url,"_blank","noopener,noreferrer")}
+  function show(title,text,warn){
+    var o=$("out");o.className=warn?"warn":"";o.style.display="block";
+    o.innerHTML="";var b=document.createElement("b");b.textContent=title;o.appendChild(b);
+    o.appendChild(document.createTextNode(text));
+  }
+  function build(e,q,c){
+    var t=e.t||"q";
+    if(t==="fix")return e.u;
+    if(t==="q")return e.u.replace("%s",encodeURIComponent(q));
+    if(t==="u")return e.u.replace("%s",encodeURIComponent(c.url));
+    if(t==="r")return e.u.replace("%s",c.url);
+    if(t==="h")return e.u.replace("%s",c.host);
+  }
+  function run(list){
+    var q=$("q").value.trim();
+    if(!q){show("Nothing to open","Type a search or paste a link.",true);return}
+    var isUrl=looksLikeUrl(q),c=isUrl?clean(q):null;
+    if(isUrl&&!c){show("Not a valid link","Check the address and try again.",true);return}
+    if(cur.id==="web"&&isUrl){
+      show("Opening cleaned link",c.url+(c.removed.length?"  (removed: "+c.removed.join(", ")+")":"  (nothing to remove)"));
+      go(c.url);return;
+    }
+    if(!list.length){show("No source selected","Tick at least one source.",true);return}
+    var opened=[],skipped=[];
+    list.forEach(function(e){
+      var t=e.t||"q";
+      if((t==="u"||t==="r"||t==="h")&&!c){skipped.push(e.n);return}
+      if(t==="q"&&isUrl&&cur.id!=="web"&&cur.id!=="site"){/* a link used as search text is fine */}
+      go(build(e,q,c));opened.push(e.n);
+    });
+    if(!opened.length){show("These sources need a link","Paste a full link instead of search words. Skipped: "+skipped.join(", "),true);return}
+    show("Opened "+opened.length+" tab"+(opened.length>1?"s":""),opened.join(", ")+(skipped.length?". Skipped, they need a link: "+skipped.join(", "):"")+". If fewer tabs appeared, allow pop-ups for this file.");
+  }
+  $("f").addEventListener("submit",function(ev){ev.preventDefault();var s=selected();run(s.length?[s[0]]:[])});
+  $("all").addEventListener("click",function(){run(selected())});
+  $("clean").addEventListener("click",function(){
+    var q=$("q").value.trim();
+    if(!looksLikeUrl(q)){show("Paste a link first","Clean link only works on addresses.",true);return}
+    var c=clean(q);
+    if(!c){show("Not a valid link","Check the address and try again.",true);return}
+    $("q").value=c.url;
+    show("Cleaned link",c.removed.length?"Removed: "+c.removed.join(", "):"Nothing to remove.");
+  });
+  renderTabs();renderSources();
+})();
+</script>
+</body>
+</html>
