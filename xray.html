@@ -4,10 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
+<!-- The browser enforces this: the page itself can't load or send anything anywhere. Opening tabs is still allowed. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
 <title>XRay</title>
 <style>
-:root{--glow:#E3EEF0;--ink:#102029;--line:#9DB3BA;--hot:#0A7C8F;--warn:#A85500;--panel:#F3F8F9}
-@media (prefers-color-scheme:dark){:root{--glow:#0E1A22;--ink:#D8E8EC;--line:#35505A;--hot:#4FD0E4;--warn:#F0A24A;--panel:#13242D}}
+:root{--glow:#E3EEF0;--ink:#102029;--line:#9DB3BA;--mute:#45616B;--hot:#0A7C8F;--warn:#A85500;--panel:#F3F8F9;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--glow:#0E1A22;--ink:#D8E8EC;--line:#35505A;--mute:#93AEB7;--hot:#4FD0E4;--warn:#F0A24A;--panel:#13242D;color-scheme:dark}}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--glow);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
 main{max-width:48rem;margin:0 auto;padding:clamp(1.5rem,6vw,3.5rem) 1.25rem 3rem}
@@ -18,75 +20,105 @@ h1 span{color:var(--hot)}
 .tabs button{background:transparent;color:var(--ink);border:0;border-bottom:4px solid transparent;margin-bottom:-2px;padding:.6rem .85rem;white-space:nowrap;font-weight:500}
 .tabs button[aria-selected=true]{border-bottom-color:var(--hot);font-weight:700}
 form{display:flex;gap:.5rem}
-input[type=text]{flex:1;min-width:0;font:inherit;padding:.85rem 1rem;border:2px solid var(--ink);background:var(--panel);color:var(--ink);border-radius:2px}
+input[type=search]{flex:1;min-width:0;font:inherit;padding:.85rem 1rem;border:2px solid var(--ink);background:var(--panel);color:var(--ink);border-radius:2px;-webkit-appearance:none;appearance:none}
 button{font:inherit;font-weight:600;padding:.85rem 1.25rem;border:2px solid var(--ink);background:var(--ink);color:var(--glow);border-radius:2px;cursor:pointer}
 button.ghost{background:transparent;color:var(--ink)}
-button:focus-visible,input:focus-visible{outline:3px solid var(--hot);outline-offset:2px}
+button.small{padding:.3rem .65rem;font-size:.875rem;font-weight:500;border-width:1px}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--hot);outline-offset:2px}
 #hint{margin:.75rem 0 0;min-height:1.5em}
+#out{margin-top:1rem;padding:1rem;border-left:4px solid var(--hot);background:var(--panel);word-break:break-word}
+#out[hidden]{display:none}
+#out.warn{border-color:var(--warn)}
+#out b{display:block;margin-bottom:.25rem}
+#out p{margin:.75rem 0 0}
+.res{list-style:none;margin:.5rem 0 0;padding:0}
+.res li{display:grid;grid-template-columns:1fr auto;gap:0 1rem;align-items:start;padding:.65rem 0;border-top:1px solid var(--line)}
+.res li:first-child{border-top:0}
+.res a{color:var(--hot);font-weight:700;font-size:1.05rem}
+.res small{display:block;font-size:.875rem;line-height:1.4;color:var(--mute)}
+.res small:first-of-type{color:var(--ink)}
+.res button{grid-row:1 / span 3;grid-column:2}
 fieldset{border:1px solid var(--line);margin:1.25rem 0 0;padding:.75rem 1rem 1rem}
 legend{padding:0 .4rem;font-weight:600}
 .engines{display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:.4rem 1rem}
 label{display:flex;gap:.5rem;align-items:flex-start;cursor:pointer}
-label small{display:block;color:var(--line)}
+label small{display:block;color:var(--mute)}
 .grp{grid-column:1/-1;margin-top:.75rem;padding-top:.6rem;border-top:1px dashed var(--line);font-weight:600;color:var(--warn)}
-.row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}
-#out{margin-top:1.5rem;padding:1rem;border-left:4px solid var(--hot);background:var(--panel);display:none;word-break:break-word}
-#out.warn{border-color:var(--warn)}
-#out b{display:block;margin-bottom:.25rem}
+.row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-top:1rem}
+.row .end{margin-left:auto;display:flex;gap:.4rem}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--line);font-size:.9rem;max-width:38rem}
-@media (max-width:30rem){form{flex-direction:column}}
+footer p{margin:0 0 .6rem}
+kbd{font:inherit;font-weight:600;padding:0 .3rem;border:1px solid var(--line);border-radius:2px}
+@media (max-width:30rem){form{flex-direction:column}.row .end{margin-left:0}}
 </style>
 </head>
 <body>
 <main>
 <h1>X<span>Ray</span></h1>
-<p class="sub">Look at material without a profile attached. Pick a source group, type or paste, and XRay opens it clean in new tabs.</p>
+<p class="sub">Look at material without a profile attached. Pick a source group, type or paste, and XRay lists clean links for you to choose from.</p>
 
-<div class="tabs" role="tablist" id="tabs"></div>
+<div class="tabs" role="tablist" id="tabs" aria-label="Source groups"></div>
 
 <form id="f" autocomplete="off">
-  <input type="text" id="q" aria-label="Search or link" autofocus>
-  <button type="submit">Open</button>
+  <input type="search" id="q" aria-label="Search or link" enterkeyhint="go" spellcheck="false" autofocus>
+  <button type="submit">Show links</button>
 </form>
 <p id="hint"></p>
 
-<fieldset>
+<div id="out" hidden></div>
+<p id="say" class="sr" aria-live="polite"></p>
+
+<fieldset id="panel" role="tabpanel">
   <legend id="legend">Sources</legend>
   <div class="engines" id="engines"></div>
   <div class="row">
     <button type="button" class="ghost" id="all">Open all selected</button>
     <button type="button" class="ghost" id="clean">Clean link only</button>
+    <span class="end">
+      <button type="button" class="ghost small" id="tickAll">Tick all</button>
+      <button type="button" class="ghost small" id="tickNone">Tick none</button>
+    </span>
   </div>
 </fieldset>
 
-<div id="out" role="status"></div>
-
 <footer>
-  XRay is a launcher, not a browser engine. It can’t block trackers on the pages you visit, so open its links in a browser with a blocker such as uBlock Origin. To open several sources at once, allow pop-ups for this file. Search addresses can change; each one is a single line in the <code>TABS</code> list in this file.
+  <p>XRay is a launcher, not a browser engine. It can’t block trackers on the pages you visit, so open its links in a browser with a blocker such as uBlock Origin, ideally in a private window so your logins don’t come along.</p>
+  <p><kbd>Enter</kbd> lists the ticked sources. <kbd>Shift</kbd>+<kbd>Enter</kbd> or Open all selected also opens them as tabs, which works only if you allow pop-ups for this file. After the first list, it updates as you type or change ticks.</p>
+  <p>XRay remembers only your last group and ticks, on this device. It never stores your searches and the page can’t send anything anywhere. Search addresses can change; each one is a single line in the <code>TABS</code> list in this file.</p>
 </footer>
 </main>
 
 <script>
-(function(){
-  /* t: q = search text (default), u = full link, r = raw link, h = hostname, fix = fixed address */
-  var TABS=[
-    {id:"web",name:"Web",ph:"Search, or paste a link",hint:"Plain engines without a profile. Tick several to compare what each one shows and leaves out. A pasted link is cleaned and opened.",
+(() => {
+  "use strict";
+
+  /* ---------- Sources ----------
+     n = name, note = short description, u = address with %s where the input goes, on = ticked by default
+     t = what goes into %s:
+       q   search text (default)      u   full cleaned link, encoded
+       r   full cleaned link, as-is   h   hostname only
+       fix fixed address, ignores the input
+     g = a group heading inside a tab (not a source) */
+  const TABS = [
+    {id:"web",name:"Web",ph:"Search, or paste a link",hint:"Plain engines without a profile. Tick several to compare what each one shows and leaves out. A pasted link is cleaned.",
      s:[
       {n:"DuckDuckGo",note:"Mixed index, no profile",u:"https://duckduckgo.com/?q=%s&kl=wt-wt",on:1},
       {n:"Brave Search",note:"Own independent index",u:"https://search.brave.com/search?q=%s",on:1},
       {n:"Mojeek",note:"Own crawler, no tracking",u:"https://www.mojeek.com/search?q=%s",on:1},
       {n:"Startpage",note:"Google results, anonymised",u:"https://www.startpage.com/do/search?q=%s",on:1},
       {n:"Marginalia",note:"Small web, non-commercial",u:"https://search.marginalia.nu/search?query=%s",on:1},
-      {g:"Vintage engines (ad-funded, they track more)",on:1},
-      {n:"Wiby",note:"Handpicked retro web",u:"https://wiby.me/?q=%s",on:1},
-      {n:"HotBot",note:"1996, relaunched 2022",u:"https://www.hotbot.com/web?query=%s",on:1},
-      {n:"Lycos",note:"1994, still running",u:"https://search.lycos.com/web/?q=%s",on:1},
-      {n:"WebCrawler",note:"1994, now a meta engine",u:"https://www.webcrawler.com/serp?q=%s",on:1},
-      {n:"Dogpile",note:"1996 meta engine",u:"https://www.dogpile.com/serp?q=%s",on:1},
-      {n:"Excite",note:"1995, still online",u:"https://results.excite.com/serp?q=%s",on:1},
-      {n:"Ask.com",note:"Ask Jeeves, 1996",u:"https://www.ask.com/web?q=%s",on:1},
-      {n:"Yahoo",note:"1994, the old directory",u:"https://search.yahoo.com/search?p=%s",on:1},
-      {n:"AltaVista (archived)",note:"Closed 2013, homepage only",u:"https://web.archive.org/web/2004/http://www.altavista.com/",t:"fix",on:1}
+      {g:"Vintage engines (ad-funded, they track more)"},
+      {n:"Wiby",note:"Handpicked retro web",u:"https://wiby.me/?q=%s"},
+      {n:"HotBot",note:"1996, relaunched 2022",u:"https://www.hotbot.com/web?query=%s"},
+      {n:"Lycos",note:"1994, still running",u:"https://search.lycos.com/web/?q=%s"},
+      {n:"WebCrawler",note:"1994, now a meta engine",u:"https://www.webcrawler.com/serp?q=%s"},
+      {n:"Dogpile",note:"1996 meta engine",u:"https://www.dogpile.com/serp?q=%s"},
+      {n:"Excite",note:"1995, still online",u:"https://results.excite.com/serp?q=%s"},
+      {n:"Ask.com",note:"Ask Jeeves, 1996",u:"https://www.ask.com/web?q=%s"},
+      {n:"Yahoo",note:"1994, the old directory",u:"https://search.yahoo.com/search?p=%s"},
+      {n:"AltaVista (archived)",note:"Closed 2013, homepage only",u:"https://web.archive.org/web/2004/http://www.altavista.com/",t:"fix"}
      ]},
     {id:"archive",name:"Archives",ph:"Search text, or paste a link for old copies",hint:"For material that was changed or removed. Text searches books and old pages; a pasted link finds saved copies of that page.",
      s:[
@@ -144,109 +176,330 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--line);font-
       {n:"Google Safe Browsing",note:"Malware and phishing report",u:"https://transparencyreport.google.com/safe-browsing/search?url=%s",t:"u"}
      ]}
   ];
-  var TRACK=/^(utm_.*|fbclid|gclid|gclsrc|dclid|gbraid|wbraid|msclkid|yclid|twclid|ttclid|li_fat_id|igshid|igsh|mc_eid|mc_cid|_hsenc|_hsmi|hsctatracking|vero_id|oly_enc_id|oly_anon_id|wickedid|spm|ref_src|ref_url|cmpid|campaign_id|ocid|s_cid|trk|trkcampaign|sc_cid|__s|_openstat|mkt_tok|pk_campaign|pk_kwd|pk_source|pk_medium|si)$/i;
-  var REDIRECT={"google.com":"q url","www.google.com":"q url","l.facebook.com":"u","l.instagram.com":"u","out.reddit.com":"url"};
 
-  var $=function(i){return document.getElementById(i)};
-  var cur=TABS[0];
+  /* Tracking parameters removed from pasted links */
+  const TRACK = /^(utm_.*|fbclid|gclid|gclsrc|dclid|gbraid|wbraid|gad_source|gad_campaignid|srsltid|_gl|msclkid|yclid|twclid|ttclid|rb_clickid|epik|li_fat_id|igshid|igsh|mc_eid|mc_cid|_hsenc|_hsmi|hsctatracking|vero_id|oly_enc_id|oly_anon_id|wickedid|spm|ref_src|ref_url|cmpid|campaign_id|ocid|s_cid|trk|trkcampaign|sc_cid|__s|_openstat|mkt_tok|pk_campaign|pk_kwd|pk_source|pk_medium|si)$/i;
 
-  function renderTabs(){
-    var t=$("tabs");t.innerHTML="";
-    TABS.forEach(function(tab){
-      var b=document.createElement("button");
-      b.type="button";b.setAttribute("role","tab");b.textContent=tab.name;
-      b.setAttribute("aria-selected",tab===cur?"true":"false");
-      b.addEventListener("click",function(){cur=tab;renderTabs();renderSources();$("out").style.display="none"});
-      t.appendChild(b);
+  /* Redirect wrappers: which host and path, and which parameter holds the real link */
+  const REDIRECTS = [
+    {host:/^(www\.)?google\.[a-z.]+$/i,               path:/^\/url$/,             keys:["q","url"]},
+    {host:/^l\.(facebook|instagram)\.com$/i,           path:null,                  keys:["u"]},
+    {host:/^out\.reddit\.com$/i,                       path:null,                  keys:["url"]},
+    {host:/\.safelinks\.protection\.outlook\.com$/i,   path:null,                  keys:["url"]},
+    {host:/^(www\.)?youtube\.com$/i,                   path:/^\/redirect$/,        keys:["q"]},
+    {host:/^(www\.)?linkedin\.com$/i,                  path:/^\/redir\/redirect\/?$/, keys:["url"]},
+    {host:/^duckduckgo\.com$/i,                        path:/^\/l\/?$/,            keys:["uddg"]},
+    {host:/^steamcommunity\.com$/i,                    path:/^\/linkfilter\/?$/,   keys:["u","url"]}
+  ];
+
+  /* What each kind of source receives, shown under every link */
+  const SENT = {q:"your search words", u:"the full link", r:"the full link", h:"only the domain name", fix:"nothing from you; it’s a fixed page"};
+  const NEEDS_LINK = new Set(["u","r","h"]);
+  const STORE = "xray:v1";
+
+  const $ = id => document.getElementById(id);
+  const make = (tag, cls, text) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
+
+  const state = {tab: TABS[0], ticks: {}, listing: false};
+
+  /* ---------- Remembering choices (only the group and ticks, never searches) ---------- */
+  function load() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORE) || "{}");
+      state.tab = TABS.find(t => t.id === saved.tab) || TABS[0];
+      if (saved.ticks && typeof saved.ticks === "object") state.ticks = saved.ticks;
+    } catch (e) { /* storage blocked or unreadable: use defaults */ }
+  }
+  function save() {
+    try { localStorage.setItem(STORE, JSON.stringify({tab: state.tab.id, ticks: state.ticks})); } catch (e) {}
+  }
+  const isTicked = (tab, src) => Array.isArray(state.ticks[tab.id]) ? state.ticks[tab.id].includes(src.n) : !!src.on;
+
+  /* ---------- Drawing the tabs and sources ---------- */
+  function renderTabs() {
+    const bar = $("tabs");
+    bar.textContent = "";
+    TABS.forEach(tab => {
+      const b = make("button", null, tab.name);
+      const on = tab === state.tab;
+      b.type = "button";
+      b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", on);
+      b.setAttribute("aria-controls", "panel");
+      b.tabIndex = on ? 0 : -1;
+      b.addEventListener("click", () => selectTab(tab));
+      bar.append(b);
     });
   }
-  function renderSources(){
-    var box=$("engines");box.innerHTML="";
-    $("q").placeholder=cur.ph;$("hint").textContent=cur.hint;
-    $("legend").textContent=cur.name+" sources";
-    cur.s.forEach(function(e,i){
-      if(e.g){var h=document.createElement("div");h.className="grp";h.textContent=e.g;box.appendChild(h);return}
-      var l=document.createElement("label"),c=document.createElement("input"),s=document.createElement("span"),m=document.createElement("small");
-      c.type="checkbox";c.value=i;c.checked=!!e.on;
-      s.textContent=e.n;m.textContent=e.note;s.appendChild(m);
-      l.appendChild(c);l.appendChild(s);box.appendChild(l);
+  function renderSources() {
+    const tab = state.tab, box = $("engines");
+    box.textContent = "";
+    $("q").placeholder = tab.ph;
+    $("hint").textContent = tab.hint;
+    $("legend").textContent = tab.name + " sources";
+    tab.s.forEach((src, i) => {
+      if (src.g) { box.append(make("div", "grp", src.g)); return; }
+      const label = make("label"), check = make("input"), name = make("span", null, src.n);
+      check.type = "checkbox";
+      check.value = i;
+      check.checked = isTicked(tab, src);
+      name.append(make("small", null, src.note));
+      label.append(check, name);
+      box.append(label);
     });
+    updateCount();
   }
-  function selected(){
-    return [].map.call($("engines").querySelectorAll("input:checked"),function(c){return cur.s[+c.value]});
+  function selected() {
+    return [...$("engines").querySelectorAll("input:checked")].map(c => state.tab.s[+c.value]);
   }
-  function looksLikeUrl(s){
-    return /^https?:\/\//i.test(s)||(/^[^\s\/]+\.[a-z]{2,}(\/\S*)?$/i.test(s)&&!/\s/.test(s));
+  function updateCount() {
+    const n = selected().length;
+    $("all").textContent = n ? `Open all selected (${n})` : "Open all selected";
+    $("all").disabled = n === 0;
   }
-  function clean(raw){
-    var s=raw.trim();
-    if(!/^https?:\/\//i.test(s))s="https://"+s;
-    var u;try{u=new URL(s)}catch(e){return null}
-    var removed=[];
-    for(var hop=0;hop<3;hop++){
-      var keys=REDIRECT[u.hostname];
-      if(keys===undefined)break;
-      if(u.hostname.indexOf("google")>-1&&u.pathname!=="/url")break;
-      var target=null;
-      keys.split(" ").forEach(function(k){var v=u.searchParams.get(k);if(v&&/^https?:\/\//i.test(v))target=v});
-      if(!target)break;
-      removed.push("redirect via "+u.hostname);
-      u=new URL(target);
+  function rememberTicks() {
+    state.ticks[state.tab.id] = selected().map(s => s.n);
+    save();
+  }
+  function selectTab(tab) {
+    state.tab = tab;
+    renderTabs();
+    renderSources();
+    save();
+    if ($("q").value.trim() && state.listing) run(false, true);
+    else hideOut();
+  }
+
+  /* ---------- Understanding the input ---------- */
+  function clean(raw) {
+    let s = raw.trim();
+    if (!/^https?:\/\//i.test(s)) s = "https://" + s;
+    let u;
+    try { u = new URL(s); } catch (e) { return null; }
+    if (!u.hostname.includes(".")) return null;
+    const removed = [];
+
+    for (let hop = 0; hop < 3; hop++) {
+      const r = REDIRECTS.find(r => r.host.test(u.hostname) && (!r.path || r.path.test(u.pathname)));
+      if (!r) break;
+      const target = r.keys.map(k => u.searchParams.get(k)).find(v => v && /^https?:\/\//i.test(v));
+      if (!target) break;
+      let next;
+      try { next = new URL(target); } catch (e) { break; }
+      removed.push("redirect via " + u.hostname);
+      u = next;
     }
-    var drop=[];
-    u.searchParams.forEach(function(v,k){if(TRACK.test(k))drop.push(k)});
-    drop.forEach(function(k){u.searchParams.delete(k);removed.push(k)});
-    if(/^(www\.)?amazon\./i.test(u.hostname)){
-      var m=u.pathname.match(/(\/(?:dp|gp\/product)\/[A-Z0-9]{10})/);
-      if(m&&u.pathname!==m[1]){u.pathname=m[1];removed.push("amazon path tracking")}
-    }
-    return {url:u.toString(),host:u.hostname,removed:removed};
-  }
-  function go(url){window.open(url,"_blank","noopener,noreferrer")}
-  function show(title,text,warn){
-    var o=$("out");o.className=warn?"warn":"";o.style.display="block";
-    o.innerHTML="";var b=document.createElement("b");b.textContent=title;o.appendChild(b);
-    o.appendChild(document.createTextNode(text));
-  }
-  function build(e,q,c){
-    var t=e.t||"q";
-    if(t==="fix")return e.u;
-    if(t==="q")return e.u.replace("%s",encodeURIComponent(q));
-    if(t==="u")return e.u.replace("%s",encodeURIComponent(c.url));
-    if(t==="r")return e.u.replace("%s",c.url);
-    if(t==="h")return e.u.replace("%s",c.host);
-  }
-  function run(list){
-    var q=$("q").value.trim();
-    if(!q){show("Nothing to open","Type a search or paste a link.",true);return}
-    var isUrl=looksLikeUrl(q),c=isUrl?clean(q):null;
-    if(isUrl&&!c){show("Not a valid link","Check the address and try again.",true);return}
-    if(cur.id==="web"&&isUrl){
-      show("Opening cleaned link",c.url+(c.removed.length?"  (removed: "+c.removed.join(", ")+")":"  (nothing to remove)"));
-      go(c.url);return;
-    }
-    if(!list.length){show("No source selected","Tick at least one source.",true);return}
-    var opened=[],skipped=[];
-    list.forEach(function(e){
-      var t=e.t||"q";
-      if((t==="u"||t==="r"||t==="h")&&!c){skipped.push(e.n);return}
-      if(t==="q"&&isUrl&&cur.id!=="web"&&cur.id!=="site"){/* a link used as search text is fine */}
-      go(build(e,q,c));opened.push(e.n);
+
+    new Set([...u.searchParams.keys()].filter(k => TRACK.test(k))).forEach(k => {
+      u.searchParams.delete(k);
+      removed.push(k);
     });
-    if(!opened.length){show("These sources need a link","Paste a full link instead of search words. Skipped: "+skipped.join(", "),true);return}
-    show("Opened "+opened.length+" tab"+(opened.length>1?"s":""),opened.join(", ")+(skipped.length?". Skipped, they need a link: "+skipped.join(", "):"")+". If fewer tabs appeared, allow pop-ups for this file.");
+
+    if (/^(www\.|smile\.)?amazon\.[a-z.]+$/i.test(u.hostname)) {
+      const m = u.pathname.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/i);
+      if (m) {
+        const short = "/dp/" + m[1];
+        if (u.pathname !== short || u.search) { u.pathname = short; u.search = ""; removed.push("Amazon tracking"); }
+      }
+    }
+    return {url: u.toString(), host: u.hostname, removed};
   }
-  $("f").addEventListener("submit",function(ev){ev.preventDefault();var s=selected();run(s.length?[s[0]]:[])});
-  $("all").addEventListener("click",function(){run(selected())});
-  $("clean").addEventListener("click",function(){
-    var q=$("q").value.trim();
-    if(!looksLikeUrl(q)){show("Paste a link first","Clean link only works on addresses.",true);return}
-    var c=clean(q);
-    if(!c){show("Not a valid link","Check the address and try again.",true);return}
-    $("q").value=c.url;
-    show("Cleaned link",c.removed.length?"Removed: "+c.removed.join(", "):"Nothing to remove.");
+
+  /* text  = plain search words
+     link  = clearly a link (starts with http(s):// or www.)
+     maybe = looks like a link but could be words, like node.js or report.pdf
+     bad   = meant as a link but not valid */
+  function classify(raw) {
+    const s = raw.trim();
+    if (!s) return {kind: "empty"};
+    const strong = /^https?:\/\//i.test(s) || /^www\./i.test(s);
+    const weak = !strong && !/\s/.test(s) && /^[^\/?#]+\.[a-z]{2,}(?:[\/?#]\S*)?$/i.test(s);
+    if (!strong && !weak) return {kind: "text", text: s};
+    const link = clean(s);
+    if (!link) return strong ? {kind: "bad", text: s} : {kind: "text", text: s};
+    return {kind: strong ? "link" : "maybe", text: s, link};
+  }
+
+  function build(src, input) {
+    const t = src.t || "q";
+    if (t === "fix") return src.u;
+    if (t === "q") return src.u.replace("%s", encodeURIComponent(input.text));
+    if (t === "u") return src.u.replace("%s", encodeURIComponent(input.link.url));
+    if (t === "r") return src.u.replace("%s", input.link.url);
+    if (t === "h") return src.u.replace("%s", input.link.host);
+  }
+
+  /* ---------- Output ---------- */
+  function hideOut() {
+    $("out").hidden = true;
+    state.listing = false;
+  }
+  function note(title, text) {
+    const o = $("out");
+    o.className = "warn";
+    o.hidden = false;
+    o.textContent = "";
+    o.append(make("b", null, title), document.createTextNode(text));
+    $("say").textContent = title + ". " + text;
+    state.listing = false;
+  }
+  async function copy(text, btn) {
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; }
+    catch (e) {
+      const ta = make("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.cssText = "position:fixed;opacity:0";
+      document.body.append(ta);
+      ta.select();
+      try { ok = document.execCommand("copy"); } catch (e2) {}
+      ta.remove();
+    }
+    btn.textContent = ok ? "Copied" : "Copy failed";
+    setTimeout(() => { btn.textContent = "Copy link"; }, 1500);
+  }
+  function renderLinks(items, skipped, opened, input, quiet) {
+    const o = $("out");
+    const count = items.length + " link" + (items.length > 1 ? "s" : "");
+    const title = opened
+      ? `Opening ${count}. Any tab the browser blocked is still here:`
+      : `${count} for “${input.text}”. Pick one to open:`;
+    o.className = "";
+    o.hidden = false;
+    o.textContent = "";
+    o.append(make("b", null, title));
+
+    const ul = make("ul", "res");
+    items.forEach(it => {
+      const li = make("li"), a = make("a", null, it.n), btn = make("button", "ghost small", "Copy link");
+      a.href = it.url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      btn.type = "button";
+      btn.setAttribute("aria-label", "Copy link for " + it.n);
+      btn.addEventListener("click", () => copy(it.url, btn));
+      li.append(a, make("small", null, it.note), make("small", null, it.detail), btn);
+      ul.append(li);
+    });
+    o.append(ul);
+    if (skipped.length) o.append(make("p", null, "Skipped, they need a link: " + skipped.join(", ") + "."));
+    if (!quiet) $("say").textContent = title.replace(/:$/, ".");
+    state.listing = true;
+  }
+
+  /* ---------- The main action ----------
+     open  = also open the links as tabs
+     quiet = live update while typing: no announcements, no warnings */
+  function run(open, quiet) {
+    const input = classify($("q").value);
+    if (input.kind === "empty") { hideOut(); if (!quiet) note("Nothing to show", "Type a search or paste a link."); return; }
+    if (input.kind === "bad") { if (!quiet) note("Not a valid link", "Check the address and try again."); return; }
+
+    const tab = state.tab, items = [], skipped = [];
+
+    /* On the Web tab a link is opened as itself, cleaned */
+    if (tab.id === "web" && input.link) {
+      const r = input.link.removed;
+      items.push({
+        n: input.kind === "link" ? "Cleaned link" : "Open as a link",
+        note: r.length ? "Removed: " + r.join(", ") : "Nothing to remove",
+        detail: `Opens ${input.link.host} directly.`,
+        url: input.link.url,
+        direct: true
+      });
+    }
+
+    /* A clear link on the Web tab needs no search engines; everything else goes through the ticked sources */
+    if (!(tab.id === "web" && input.kind === "link")) {
+      const list = selected();
+      if (!list.length && !items.length) { if (!quiet) note("No source selected", "Tick at least one source."); return; }
+      list.forEach(src => {
+        const t = src.t || "q";
+        if (NEEDS_LINK.has(t) && !input.link) { skipped.push(src.n); return; }
+        const url = build(src, input);
+        items.push({n: src.n, note: src.note, detail: `Goes to ${new URL(url).hostname}, which gets ${SENT[t]}.`, url});
+      });
+    }
+
+    if (!items.length) {
+      if (!quiet) note("These sources need a link", "Paste a full link instead of search words. Skipped: " + skipped.join(", ") + ".");
+      return;
+    }
+
+    /* Don't open a guessed link like https://node.js as a tab; it stays in the list to click if meant */
+    if (open) items.forEach(it => { if (!(it.direct && input.kind === "maybe")) window.open(it.url, "_blank", "noopener,noreferrer"); });
+    renderLinks(items, skipped, open, input, quiet);
+  }
+
+  /* ---------- Starting from an address like xray.html#q=raspberry+pi or #tab=talk&q=... ---------- */
+  function readHash() {
+    const h = new URLSearchParams(location.hash.slice(1));
+    const tab = TABS.find(t => t.id === h.get("tab"));
+    if (tab) state.tab = tab;
+    const q = h.get("q");
+    if (q !== null) $("q").value = q;
+    return q !== null && q.trim() !== "";
+  }
+
+  /* ---------- Events ---------- */
+  $("f").addEventListener("submit", e => { e.preventDefault(); run(false); });
+  $("q").addEventListener("keydown", e => {
+    if (e.key === "Enter" && e.shiftKey) { e.preventDefault(); run(true); }
   });
-  renderTabs();renderSources();
+  let timer;
+  $("q").addEventListener("input", () => {
+    clearTimeout(timer);
+    if (!$("q").value.trim()) { hideOut(); return; }
+    if (state.listing) timer = setTimeout(() => run(false, true), 150);
+  });
+  $("all").addEventListener("click", () => run(true));
+  $("clean").addEventListener("click", () => {
+    const input = classify($("q").value);
+    if (!input.link) { note("Paste a link first", "Clean link only works on addresses."); return; }
+    $("q").value = input.link.url;
+    const r = input.link.removed;
+    note("Cleaned link", r.length ? "Removed: " + r.join(", ") : "Nothing to remove.");
+    $("out").className = "";
+  });
+  $("engines").addEventListener("change", () => {
+    rememberTicks();
+    updateCount();
+    if (state.listing) run(false, true);
+  });
+  const tickAllTo = on => {
+    $("engines").querySelectorAll("input").forEach(c => { c.checked = on; });
+    rememberTicks();
+    updateCount();
+    if (state.listing) run(false, true);
+  };
+  $("tickAll").addEventListener("click", () => tickAllTo(true));
+  $("tickNone").addEventListener("click", () => tickAllTo(false));
+
+  /* Arrow keys move between groups, as in any tab bar */
+  $("tabs").addEventListener("keydown", e => {
+    const i = TABS.indexOf(state.tab);
+    const j = {ArrowRight: (i + 1) % TABS.length, ArrowLeft: (i - 1 + TABS.length) % TABS.length, Home: 0, End: TABS.length - 1}[e.key];
+    if (j === undefined) return;
+    e.preventDefault();
+    selectTab(TABS[j]);
+    $("tabs").children[j].focus();
+  });
+
+  window.addEventListener("hashchange", () => {
+    if (readHash()) { renderTabs(); renderSources(); run(false); }
+  });
+
+  load();
+  const fromHash = readHash();
+  renderTabs();
+  renderSources();
+  if (fromHash) run(false);
 })();
 </script>
 </body>
