@@ -193,6 +193,23 @@
     font-size:13px;
     color:var(--muted);
   }
+  .bbs-link{
+    margin-top:20px;
+    padding-top:16px;
+    border-top:1px solid var(--line);
+    text-align:center;
+    font-family:monospace;
+    font-size:11px;
+    letter-spacing:2px;
+  }
+  .bbs-link a{
+    color:var(--muted);
+    text-decoration:none;
+    transition:color 0.2s ease;
+  }
+  .bbs-link a:hover{
+    color:#16834f;
+  }
 </style>
 </head>
 <body>
@@ -206,7 +223,7 @@
     <section class="intro">
       <p>
         <!-- Korte openingszin / tagline. Vervang deze tekst of verwijder het hele <p>-blok. -->
-       
+
       </p>
     </section>
 
@@ -259,19 +276,24 @@
         <div class="embed-card">
           <span class="embed-label">YouTube</span>
           <iframe onload="iFrameSetup(this)" src="https://app.mirror-app.com/feed-youtube/51525b1c-8f71-4b11-8ed2-b7ace259cbc3/preview" style="width:100%;border:none;overflow:hidden;" scrolling="no"></iframe>
-<script src="https://cdn.jsdelivr.net/npm/@mirrorapp/iframe-bridge@latest/dist/index.umd.js"></script>
+          <script src="https://cdn.jsdelivr.net/npm/@mirrorapp/iframe-bridge@latest/dist/index.umd.js"></script>
           <div id="ytWidgetSlot"></div>
         </div>
 
-
       </div>
     </section>
-
 
   </main>
 
   <footer>
     <p>&copy; 2026 Soundscape Studio</p>
+    <div class="bbs-link">
+      <a href="https://roomfullofoscillators.neocities.org/"
+         target="_blank"
+         rel="noopener noreferrer">
+        RFO.BBS — CONNECT TO THE OLD NETWORK
+      </a>
+    </div>
   </footer>
 
 </body>
